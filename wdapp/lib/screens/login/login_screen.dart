@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/login_form.dart';
+
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
@@ -7,7 +9,9 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Text('Login Screen!'),
+        child: LoginForm(
+          onSubmit: (var formData) => null
+        ), 
       ),
     );
   }
