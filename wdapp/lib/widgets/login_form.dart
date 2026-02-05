@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'location_form_field.dart';
+
 class LoginForm extends StatefulWidget {
   final Function(Map<String, String>) onSubmit;
 
@@ -15,6 +17,7 @@ class _LoginFormState extends State<LoginForm> {
   final _ageController = TextEditingController();
   final _locationController = TextEditingController();
   String? _selectedGender;
+  String? _selectedLocation;
 
   bool isActive = false;
 
@@ -113,7 +116,10 @@ class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 350,
+      constraints: const BoxConstraints(
+        maxWidth: 350,
+        maxHeight: 600,
+      ),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -127,10 +133,10 @@ class _LoginFormState extends State<LoginForm> {
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        child: Form(
+      child: Form(
           key: _formKey,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Name Field
@@ -206,21 +212,17 @@ class _LoginFormState extends State<LoginForm> {
               ),
               const SizedBox(height: 16),
 
-              // Location Field
-              TextFormField(
-                controller: _locationController,
-                decoration: InputDecoration(
-                  labelText: 'Location',
-                  hintText: 'Enter your location',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  prefixIcon: const Icon(Icons.location_on),
-                ),
-                readOnly: isActive,
+              LocationFormField(
+                value: _selectedLocation,
+                label: 'Location',
+                onSelected: isActive ? null : (String? value) {
+                  setState(() {
+                    _selectedLocation = value;
+                  });
+                },
                 validator: _validateLocation,
                 autovalidateMode: AutovalidateMode.onUnfocus,
-              ),
+              ),              
               const SizedBox(height: 24),
 
               // Submit Button
@@ -245,7 +247,6 @@ class _LoginFormState extends State<LoginForm> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
