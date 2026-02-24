@@ -28,7 +28,7 @@ List<SingleChildWidget> get providersBetaConfig {
         handleDone: context.read<EventService>().handleDone,
       )
     )),
-    Provider(create: (context) => AuthRepo(
+    ChangeNotifierProvider(create: (context) => AuthRepo(
       apiService: context.read<ApiService>(),
       storageService: context.read<StorageService>(),
     )),
