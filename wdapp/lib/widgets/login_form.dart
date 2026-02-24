@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
+
 import 'location_form_field.dart';
 
 class LoginForm extends StatefulWidget {
@@ -13,20 +15,47 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
+  final _genderKey = GlobalKey<FormFieldState>();
+  final _locationKey = GlobalKey<FormFieldState>();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
   final _locationController = TextEditingController();
-  String? _selectedGender;
-  String? _selectedLocation;
-
+  late final LocationFormFieldModel viewModel = LocationFormFieldModel(
+    locationRepo: context.read(),
+  );
+  
   bool isActive = false;
 
   @override
+  void initState() {
+    super.initState();
+    _locationController.addListener(_onLocationTextChanged);
+  }
+
+  @override
   void dispose() {
+    _locationController.removeListener(_onLocationTextChanged);
     _nameController.dispose();
     _ageController.dispose();
     _locationController.dispose();
     super.dispose();
+  }
+
+  void _onLocationTextChanged() {
+    final text = _locationController.text.trim();
+
+    if(text.length >= 3 && viewModel.canLoadMenu == false) {
+      setState(() {
+        viewModel.canLoadMenu = true;
+      });
+    }
+
+    if(text.length < 3 && viewModel.canLoadMenu == true) {
+      setState(() {
+        viewModel.canLoadMenu = false;
+        _locationKey.currentState!.setValue(null);
+      });
+    }
   }
 
   String? _validateName(String? value) {
@@ -60,6 +89,7 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   String? _validateLocation(String? value) {
+    print("Validate location called ${value}");
     if (value == null || value.isEmpty) {
       return 'Is required';
     }
@@ -80,9 +110,9 @@ class _LoginFormState extends State<LoginForm> {
 
     setState(() { isActive = true; });
     final formData = {
-      'gender': _selectedGender ?? '',
+      'gender': _genderKey.currentState!.value as String ?? '',
       'age': _ageController.text,
-      'location': _locationController.text,
+      'location':_locationKey.currentState!.value  as String ?? '',
       'name': _nameController.text,
     };
     widget.onSubmit(formData);
@@ -181,6 +211,7 @@ class _LoginFormState extends State<LoginForm> {
                   // Gender Dropdown
                   Expanded(
                     child: DropdownButtonFormField<String>(
+                      key: _genderKey,
                       decoration: InputDecoration(
                         labelText: 'Gender',
                         border: OutlineInputBorder(
@@ -188,7 +219,6 @@ class _LoginFormState extends State<LoginForm> {
                         ),
                         prefixIcon: const Icon(Icons.wc),
                       ),
-                      value: _selectedGender,
                       items: const [
                         DropdownMenuItem(
                           value: 'M',
@@ -199,11 +229,7 @@ class _LoginFormState extends State<LoginForm> {
                           child: Text('Female'),
                         ),
                       ],
-                      onChanged: isActive ? null : (String? value) {
-                        setState(() {
-                          _selectedGender = value;
-                        });
-                      },
+                      onChanged: isActive ? null : (String? value) => null,
                       validator: _validateGender,
                       autovalidateMode: AutovalidateMode.onUnfocus,
                     ),
@@ -213,13 +239,12 @@ class _LoginFormState extends State<LoginForm> {
               const SizedBox(height: 16),
 
               LocationFormField(
-                value: _selectedLocation,
+                menuKey: _locationKey,
+                viewModel: viewModel,
+                controller: _locationController,
                 label: 'Location',
-                onSelected: isActive ? null : (String? value) {
-                  setState(() {
-                    _selectedLocation = value;
-                  });
-                },
+                hint: 'State/Province/Country',
+                onSelected: isActive ? null : (String? value) => null,
                 validator: _validateLocation,
                 autovalidateMode: AutovalidateMode.onUnfocus,
               ),              
