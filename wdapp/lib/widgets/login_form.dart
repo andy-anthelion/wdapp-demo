@@ -15,8 +15,8 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  final _genderKey = GlobalKey<FormFieldState>();
-  final _locationKey = GlobalKey<FormFieldState>();
+  final _genderKey = GlobalKey<FormFieldState<String>>();
+  final _locationKey = GlobalKey<FormFieldState<String>>();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
   final _locationController = TextEditingController();
@@ -110,9 +110,9 @@ class _LoginFormState extends State<LoginForm> {
 
     setState(() { isActive = true; });
     final formData = {
-      'gender': _genderKey.currentState!.value as String ?? '',
+      'gender': _genderKey.currentState!.value ?? '',
       'age': _ageController.text,
-      'location':_locationKey.currentState!.value  as String ?? '',
+      'location':_locationKey.currentState!.value ?? '',
       'name': _nameController.text,
     };
     widget.onSubmit(formData);
