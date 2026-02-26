@@ -1,13 +1,36 @@
 import 'package:flutter/material.dart';
-
+import 'package:go_router/go_router.dart';
+import 'package:result_dart/result_dart.dart';
 import 'package:provider/provider.dart';
 
+import '../repos/auth_repo.dart';
+import '../routing/routes.dart';
 import 'location_form_field.dart';
 
-class LoginForm extends StatefulWidget {
-  final Function(Map<String, String>) onSubmit;
+class LoginFormModel {
+  LoginFormModel({
+    required AuthRepo authRepo,
+  }): _authRepo = authRepo;
 
-  const LoginForm({Key? key, required this.onSubmit}) : super(key: key);
+  final AuthRepo _authRepo;
+
+  Future<Result<void>> login({
+    required String gender,
+    required int age,
+    required String location,
+    required String name
+  }) async => _authRepo.login(
+    gender: gender,
+    age: age,
+    location: location,
+    name: name
+  ); 
+}
+
+class LoginForm extends StatefulWidget {
+  final LoginFormModel viewModel;
+
+  const LoginForm({Key? key, required this.viewModel}) : super(key: key);
 
   @override
   State<LoginForm> createState() => _LoginFormState();
@@ -103,26 +126,35 @@ class _LoginFormState extends State<LoginForm> {
     return null;
   }
 
-  Future<void> _submitForm() async {
+  void _renderSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        showCloseIcon: true,
+      ),
+    );  
+  }
+
+  void _submitForm() {
     if (_formKey.currentState!.validate() == false) {
       return;
     }
 
     setState(() { isActive = true; });
-    final formData = {
-      'gender': _genderKey.currentState!.value ?? '',
-      'age': _ageController.text,
-      'location':_locationKey.currentState!.value ?? '',
-      'name': _nameController.text,
-    };
-    widget.onSubmit(formData);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Form submitted successfully!'),
-        showCloseIcon: true,
-      ),
-    );
-    setState(() { isActive = false; });
+    widget.viewModel.login(
+      gender: _genderKey.currentState!.value ?? '',
+      age: int.parse(_ageController.text),
+      location:_locationKey.currentState!.value ?? '',
+      name: _nameController.text,
+    )
+    .then((Result<void> result) {
+      result.fold((void _) {
+        GoRouter.of(context).go(Routes.home);
+      },(failure) {
+        _renderSnackBar("Login Failed! ${failure.toString()}");
+      });
+    })
+    .whenComplete(() => setState(() { isActive = false; }));
   }
 
   Widget _renderSubmitButtonLabel(BuildContext context) {
