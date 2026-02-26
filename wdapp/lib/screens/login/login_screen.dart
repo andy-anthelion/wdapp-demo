@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../widgets/login_form.dart';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+  LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    LoginFormModel viewModel = LoginFormModel(
+      authRepo: context.read(),
+    );
     return Scaffold(
       body: Center(
-        child: LoginForm(
-          onSubmit: (var formData) => null
-        ), 
+        child: LoginForm(viewModel: viewModel),
       ),
     );
   }
