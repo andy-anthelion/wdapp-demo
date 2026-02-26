@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:result_dart/result_dart.dart';
+
+import '../repos/auth_repo.dart';
+import '../routing/routes.dart';
+
+class LogoutButtonModel {
+  LogoutButtonModel({
+    required AuthRepo authRepo,
+  }): _authRepo = authRepo;
+
+  final AuthRepo _authRepo;
+
+  Future<Result<void>> logout() async => _authRepo.logout();
+}
 
 class LogoutButton extends StatefulWidget {
-  final Function() onSubmit;
+  final LogoutButtonModel viewModel;
 
-  const LogoutButton({Key? key, required this.onSubmit}) : super(key: key);
+  const LogoutButton({Key? key, required this.viewModel}) : super(key: key);
 
   @override
   State<LogoutButton> createState() => _LogoutButtonState();
@@ -12,10 +27,26 @@ class LogoutButton extends StatefulWidget {
 class _LogoutButtonState extends State<LogoutButton> {
   bool isActive = false;
 
-  Future<void> _handleLogout() async {
+  void _renderSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        showCloseIcon: true,
+      ),
+    );  
+  }
+
+  void _handleLogout() {
     setState(() { isActive = true; });
-    widget.onSubmit();
-    setState(() { isActive = false; });
+    widget.viewModel.logout()
+    .then((Result<void> result) {
+      result.fold((void _) {
+        GoRouter.of(context).go(Routes.home);
+      },(failure) {
+        _renderSnackBar("Login Failed! ${failure.toString()}");
+      });
+    })
+    .whenComplete(() => setState(() { isActive = false; }));
   }
 
   Widget _renderButtonContent(BuildContext context) {
