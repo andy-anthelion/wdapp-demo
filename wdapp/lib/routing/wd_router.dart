@@ -6,14 +6,13 @@ import 'routes.dart';
 
 import '../repos/auth_repo.dart';
 
-import '../screens/login/login_screen.dart';
-import '../screens/chat/chat_screen.dart';
+import '../screens/chat_screen.dart';
+import '../screens/contacts_screen.dart';
+import '../screens/login_screen.dart';
 
 class WDRouter {
-
-  //WDSize
   
-  Future<String?> _redirectCallback(BuildContext context, GoRouterState state) async {
+  Future<String?> _redirectAuthCallback(BuildContext context, GoRouterState state) async {
     final bool loggedIn = await context.read<AuthRepo>().isAuthenticated;
     final bool loggingIn = state.matchedLocation == Routes.login;
 
@@ -21,14 +20,14 @@ class WDRouter {
       return Routes.login;
     }
 
-    if(loggedIn) {
+    if(loggingIn) {
       return Routes.home;
     }
 
     return null;
   }
 
-  List<RouteBase> _getAppRoutes(AuthRepo authRepo) {
+  List<RouteBase> _getAppRoutes() {
     return [
       GoRoute(
         path: Routes.login,
@@ -38,8 +37,21 @@ class WDRouter {
       ),
       GoRoute(
         path: Routes.home,
+        redirect: (context, state) {
+          final isCompact = MediaQuery.sizeOf(context).width <= 600;
+          return isCompact ? Routes.contacts : Routes.chat;
+        }
+      ),
+      GoRoute(
+        path: Routes.chat,
         builder: (context, state) {
           return ChatScreen();
+        }
+      ),
+      GoRoute(
+        path: Routes.contacts,
+        builder: (context, state) {
+          return ContactsScreen();
         }
       ),
     ];
@@ -47,8 +59,8 @@ class WDRouter {
 
   GoRouter routerConfig(AuthRepo authRepo) => GoRouter(
     initialLocation: Routes.home,
-    redirect: _redirectCallback,
+    redirect: _redirectAuthCallback,
     refreshListenable: authRepo,
-    routes: _getAppRoutes(authRepo),
+    routes: _getAppRoutes(),
   );
 }
