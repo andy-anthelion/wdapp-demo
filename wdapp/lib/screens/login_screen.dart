@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../widgets/logout_button.dart';
+import '../widgets/login_form.dart';
 
-class ChatScreen extends StatelessWidget {
-  const ChatScreen({super.key});
+class LoginScreen extends StatelessWidget {
+  LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    LogoutButtonModel viewModel = LogoutButtonModel(
+    LoginFormModel viewModel = LoginFormModel(
       authRepo: context.read(),
     );
     return Scaffold(
       body: Center(
-        child: LogoutButton(viewModel: viewModel),
+        child: LoginForm(viewModel: viewModel),
       ),
     );
   }
