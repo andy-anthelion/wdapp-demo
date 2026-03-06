@@ -12,7 +12,7 @@ class LoginScreen extends StatelessWidget {
     List<Widget> screenContent = <Widget>[
       Flexible(child: const Logo()),
       Card(
-        color: ColorScheme.of(context).surface,
+        color: ColorScheme.of(context).surfaceContainer,
         elevation: 5.0,
         child: LoginForm(
           viewModel: LoginFormModel(
@@ -24,16 +24,19 @@ class LoginScreen extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isPotrait = constraints.maxWidth < constraints.maxHeight;
-        return Center(
+        return Scaffold(
+          backgroundColor: ColorScheme.of(context).surface,
+          body: Center(
           child: (isPotrait) ?
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: screenContent
-          ) :
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: screenContent, 
-          ), 
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: screenContent
+            ) :
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: screenContent, 
+            ), 
+          ),
         );
       }
     );
