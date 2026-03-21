@@ -19,27 +19,39 @@ class ContactBadge extends StatelessWidget {
       ColorScheme.of(context).onSurface;
     return Container(
       //padding: const EdgeInsets.all(4.0),
-      child: Column(
-        //spacing: 2.0,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
+        spacing: 4.0,
         children: <Widget>[
-          Text(
-            "${contact.name} ${contact.age}${contact.gender}",
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextTheme.of(context).titleLarge!.copyWith(
-              color: color,
-              height: 1.0,
+          CircleAvatar(
+            child: Text(
+              contact.name.substring(0, 2).toUpperCase()
             ),
           ),
-          Text(
-            contact.location,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextTheme.of(context).titleMedium!.copyWith(
-              color: color,
-              height: 1.0,
+          Expanded(
+            child: Column(
+              //spacing: 2.0,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  "${contact.name} ${contact.age}${contact.gender}",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextTheme.of(context).titleLarge!.copyWith(
+                    color: color,
+                    height: 1.0,
+                  ),
+                ),
+                Text(
+                  contact.location,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextTheme.of(context).titleMedium!.copyWith(
+                    color: color,
+                    height: 1.0,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
