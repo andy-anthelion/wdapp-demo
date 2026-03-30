@@ -9,6 +9,7 @@ import '../services/location_service.dart';
 import '../services/random_service.dart';
 import '../services/storage_service.dart';
 
+import '../repos/app_repo.dart';
 import '../repos/auth_repo.dart';
 import '../repos/contact_repo.dart';
 import '../repos/location_repo.dart';
@@ -28,6 +29,7 @@ List<SingleChildWidget> get providersBetaConfig {
         handleDone: context.read<EventService>().handleDone,
       )
     )),
+    Provider(create: (context) => AppRepo()),
     ChangeNotifierProvider(create: (context) => AuthRepo(
       apiService: context.read<ApiService>(),
       storageService: context.read<StorageService>(),
