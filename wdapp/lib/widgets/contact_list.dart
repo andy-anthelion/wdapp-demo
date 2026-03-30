@@ -1,13 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../repos/app_repo.dart';
+
 import '../models/events/events.dart';
 import '../models/contact/contact.dart';
 import '../models/contact/contact_details.dart';
 import '../widgets/contact_card.dart';
 
 class ContactListModel {
-  ContactListModel() {
+  ContactListModel({
+    required AppRepo appRepo,
+  }): 
+    _appRepo = appRepo
+  {
     const mj = Contact(id:'+23USCA.MaryJane....');
     contacts = <ContactDetails> [
       ContactDetails(
@@ -32,10 +38,12 @@ class ContactListModel {
       ),
     ];
 
-    _uecContactList.stream.listen(_handleUserEvents);
+    _uecContactList.stream.listen(_handleUserEventsFromWidget);
   }
 
   List<ContactDetails>? contacts;
+
+  final AppRepo _appRepo;
 
   final StreamController<List<ContactDetails>?> _scContactListModel = StreamController<List<ContactDetails>?>();
   Stream<List<ContactDetails>?> get stateStream => _scContactListModel.stream;
@@ -43,12 +51,14 @@ class ContactListModel {
   final StreamController<UserEvent> _uecContactList = StreamController<UserEvent>();
   Function(UserEvent) get sendUserEvent => _uecContactList.sink.add; 
 
-  Future<void> _handleUserEvents(UserEvent event) async {
+  Future<void> _handleUserEventsFromWidget(UserEvent event) async {
     switch(event) {
-      case UserEventSync:
+      case UserEventSync():
         _scContactListModel.sink.add(contacts);
+      case UserEventSelectContact():
+        _appRepo.appSendUserEvent(event);
       default:
-        print("ContactListModel: no handler for event");
+        print("ContactListModel Widget Events: no handler for event");
     }
   }
 }
@@ -71,7 +81,15 @@ class ContactList extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         return ContactCard(
           contact: contacts![index],
-          onTapped: () => tapAction(UserEventSync()),
+          onTapped: () => tapAction(
+            UserEventSelectContact(
+              age: contacts![index].age,
+              gender: contacts![index].gender,
+              loc: contacts![index].loc,
+              location: contacts![index].location,
+              name: contacts![index].name,
+            )
+          ),
         );
       },
     );
@@ -87,7 +105,15 @@ class ContactList extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         return ContactCard(
           contact: contacts![index],
-          onTapped: () => tapAction(UserEventSync()),
+          onTapped: () => tapAction(
+            UserEventSelectContact(
+              age: contacts![index].age,
+              gender: contacts![index].gender,
+              loc: contacts![index].loc,
+              location: contacts![index].location,
+              name: contacts![index].name,
+            )
+          ),
           isCompact: true,
         );
       },

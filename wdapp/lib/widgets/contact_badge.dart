@@ -1,61 +1,98 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:async/async.dart';
 
-import '../models/contact/contact_details.dart'; 
+import '../repos/app_repo.dart';
+
+import '../models/events/events.dart';
+import '../models/contact/contact_details.dart';
+import 'contact_card.dart' show ContactAvatar;
+
+class ContactBadgeModel {
+  ContactBadgeModel({
+    required AppRepo appRepo,
+  }): 
+    _appRepo = appRepo
+  {
+    _sgContactBadgeModel.stream.listen(_handleEvents);
+    _sgContactBadgeModel.add(_appRepo.appUserEvents);
+  }
+
+  final AppRepo _appRepo;
+
+  ContactDetails? contact = null;
+
+  final StreamController<ContactDetails?> _scContactBadgeModel = StreamController<ContactDetails?>();
+  Stream<ContactDetails?> get stateStream => _scContactBadgeModel.stream;
+
+  final StreamGroup<Event> _sgContactBadgeModel = StreamGroup<Event>();
+
+  Future<void> _handleEvents(Event event) async {
+    switch(event) {
+      case UserEventSelectContact():
+        contact = ContactDetails(
+          age: event.age,
+          gender: event.gender,
+          loc : event.loc,
+          location : event.location,
+          name: event.name,
+          message: "",
+          unread: 0,
+          timestamp: 0,
+        );
+        _scContactBadgeModel.sink.add(contact);
+      default:
+        print("ContactBadgeModel : no handler for event");
+    }
+  }
+}
 
 class ContactBadge extends StatelessWidget {
   const ContactBadge({
     super.key,
-    required this.contact,
-    this.isSelected = false,
+    required this.viewModel,
   });
 
-  final ContactDetails contact;
-  final bool isSelected;
+  final ContactBadgeModel viewModel;
+
+  Widget _buildRegular(
+    BuildContext context,
+    ContactDetails? contact
+  ){
+    return Card(
+      elevation: 0.0,
+      color: ColorScheme.of(context).surfaceContainer,
+      child: ListTile(
+        leading: ContactAvatar(
+          name: contact!.name,
+          count: 0,
+        ),
+        title: Text(
+          "${contact!.name} ${contact!.age}${contact!.gender}"
+        ),
+        subtitle: Text(
+          contact!.location,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
 
   @override
-  Widget build(BuildContext context){
-    final color = isSelected ? 
-      ColorScheme.of(context).onPrimaryContainer :
-      ColorScheme.of(context).onSurface;
-    return Container(
-      //padding: const EdgeInsets.all(4.0),
-      child: Row(
-        spacing: 4.0,
-        children: <Widget>[
-          CircleAvatar(
-            child: Text(
-              contact.name.substring(0, 2).toUpperCase()
-            ),
-          ),
-          Expanded(
-            child: Column(
-              //spacing: 2.0,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  "${contact.name} ${contact.age}${contact.gender}",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextTheme.of(context).titleLarge!.copyWith(
-                    color: color,
-                    height: 1.0,
-                  ),
-                ),
-                Text(
-                  contact.location,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextTheme.of(context).titleMedium!.copyWith(
-                    color: color,
-                    height: 1.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: viewModel.stateStream,
+      initialData: viewModel.contact,
+      builder: (
+        BuildContext context, 
+        AsyncSnapshot<ContactDetails?> snapshot
+      ){
+        if(snapshot.data == null) {
+          return SizedBox(height: 50);
+        }
+        return _buildRegular(context, snapshot.data);
+      },
     );
   }
 }
