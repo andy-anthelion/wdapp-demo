@@ -38,6 +38,22 @@ class ServerEventMessageDelivery extends ServerEvent {
 
 class UserEventSync extends UserEvent {}
 
+class UserEventSelectContact extends UserEvent {
+  final int age;
+  final String gender;
+  final String loc;
+  final String location;
+  final String name;
+
+  UserEventSelectContact({
+    required this.age,
+    required this.gender,
+    required this.loc,
+    required this.location,
+    required this.name,
+  }): super();
+}
+
 class UserEventReadMessage extends UserEvent {
   final String id1;
   final String id2;
