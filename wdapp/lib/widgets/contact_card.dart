@@ -17,17 +17,22 @@ class ContactCard extends StatelessWidget {
   Widget _buildRegular(BuildContext context) {
     return Card(
       elevation: 1.0,
-      child:ListTile(
+      clipBehavior: Clip.hardEdge,
+      child: ListTile(
+        hoverColor: Colors.transparent,
         leading: ContactAvatar(
           name: contact.name,
           count: contact.unread,
         ),
-        title : Text(
+        title: Text(
           "${contact.name} ${contact.age}${contact.gender}"
         ),
-        subtitle: Text(contact.location),
+        subtitle: Text(
+          contact.location,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         onTap: onTapped,
-        hoverColor: Colors.transparent,
       ),
     );
   }
