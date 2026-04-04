@@ -14,7 +14,7 @@ class ContactHeader extends StatelessWidget {
       authRepo: context.read()
     );
     return Padding(
-      padding: EdgeInsets.all(8.0),
+      padding: EdgeInsets.all(16.0),
       child: Row(
         children: <Widget>[
           Expanded(

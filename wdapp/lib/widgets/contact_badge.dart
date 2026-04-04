@@ -89,7 +89,7 @@ class ContactBadge extends StatelessWidget {
         AsyncSnapshot<ContactDetails?> snapshot
       ){
         if(snapshot.data == null) {
-          return SizedBox(height: 50);
+          return SizedBox(height: 72);
         }
         return _buildRegular(context, snapshot.data);
       },
