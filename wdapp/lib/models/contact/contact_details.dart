@@ -17,4 +17,11 @@ abstract class ContactDetails with _$ContactDetails {
     required int timestamp,
     required int unread,
   }) = _ContactDetails;
+
+  String get id {
+    return "${gender == 'F'?'+':'-'}"
+      "${age.toString().padLeft(2, '0')}"
+      "$loc"
+      "${name.padRight(12, '.')}";
+  }
 }
