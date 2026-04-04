@@ -71,8 +71,9 @@ class _LogoutButtonState extends State<LogoutButton> {
     return IconButton(
       onPressed: isActive ? null : _handleLogout,
       icon: _renderButtonContent(context),
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.all(8.0),
       constraints: const BoxConstraints(),
+      hoverColor: Colors.transparent,
       splashRadius: 24,
     );
   }
