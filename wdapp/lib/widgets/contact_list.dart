@@ -37,8 +37,6 @@ class ContactListModel {
         message: 'Mary me!!',
       ),
     ];
-
-    _uecContactList.stream.listen(_handleUserEventsFromWidget);
   }
 
   List<ContactDetails>? contacts;
@@ -48,29 +46,28 @@ class ContactListModel {
   final StreamController<List<ContactDetails>?> _scContactListModel = StreamController<List<ContactDetails>?>();
   Stream<List<ContactDetails>?> get stateStream => _scContactListModel.stream;
 
-  final StreamController<UserEvent> _uecContactList = StreamController<UserEvent>();
-  Function(UserEvent) get sendUserEvent => _uecContactList.sink.add; 
+  Function(int) get tapAction => (int index) { 
+    _appRepo.appSendUserEvent(
+      UserEventSelectContact(
+        age: contacts![index].age,
+        gender: contacts![index].gender,
+        loc: contacts![index].loc,
+        location: contacts![index].location,
+        name: contacts![index].name,
+      )
+    ); 
+  }; 
 
-  Future<void> _handleUserEventsFromWidget(UserEvent event) async {
-    switch(event) {
-      case UserEventSync():
-        _scContactListModel.sink.add(contacts);
-      case UserEventSelectContact():
-        _appRepo.appSendUserEvent(event);
-      default:
-        print("ContactListModel Widget Events: no handler for event");
-    }
-  }
 }
 
 class ContactList extends StatelessWidget {
   ContactList({
     super.key,
     required this.viewModel,
-  }): tapAction = viewModel.sendUserEvent;
+  }): tapAction = viewModel.tapAction;
 
   final ContactListModel viewModel;
-  final Function(UserEvent) tapAction;
+  final Function(int) tapAction;
 
   Widget _buildRegular(
     BuildContext context,
@@ -81,15 +78,7 @@ class ContactList extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         return ContactCard(
           contact: contacts![index],
-          onTapped: () => tapAction(
-            UserEventSelectContact(
-              age: contacts![index].age,
-              gender: contacts![index].gender,
-              loc: contacts![index].loc,
-              location: contacts![index].location,
-              name: contacts![index].name,
-            )
-          ),
+          onTapped: () => tapAction(index),
         );
       },
     );
@@ -105,15 +94,7 @@ class ContactList extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         return ContactCard(
           contact: contacts![index],
-          onTapped: () => tapAction(
-            UserEventSelectContact(
-              age: contacts![index].age,
-              gender: contacts![index].gender,
-              loc: contacts![index].loc,
-              location: contacts![index].location,
-              name: contacts![index].name,
-            )
-          ),
+          onTapped: () => tapAction(index),
           isCompact: true,
         );
       },
