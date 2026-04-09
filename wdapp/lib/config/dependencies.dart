@@ -16,6 +16,10 @@ import '../repos/location_repo.dart';
 import '../repos/message_repo.dart';
 import '../repos/unread_repo.dart';
 
+import '../widgets/contact_badge.dart';
+import '../widgets/contact_list.dart';
+import '../widgets/conversation_list.dart';
+
 List<SingleChildWidget> get providersBetaConfig {
   return [
     Provider(create: (context) => LocationService()),
@@ -46,6 +50,15 @@ List<SingleChildWidget> get providersBetaConfig {
     )),
     Provider(create: (context) => UnreadRepo(
       apiService: context.read<ApiService>(),
+    )),
+    Provider(create: (context) => ContactBadgeModel(
+      appRepo: context.read<AppRepo>(),
+    )),
+    Provider(create: (context) => ContactListModel(
+      appRepo: context.read<AppRepo>(),
+    )),
+    Provider(create: (context) => ConversationListModel(
+      appRepo: context.read<AppRepo>(),
     )),
   ];
 }
