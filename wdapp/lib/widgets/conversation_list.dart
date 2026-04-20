@@ -39,7 +39,7 @@ class ConversationListModel {
 
   final AppRepo _appRepo;
 
-  final StreamController<List<Message>?> _scConvoListModel = StreamController<List<Message>?>();
+  final StreamController<List<Message>?> _scConvoListModel = StreamController<List<Message>?>.broadcast();
   Stream<List<Message>?> get stateStream => _scConvoListModel.stream;
 }
 

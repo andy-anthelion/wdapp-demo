@@ -22,7 +22,7 @@ class ContactBadgeModel {
 
   ContactDetails? contact = null;
 
-  final StreamController<ContactDetails?> _scContactBadgeModel = StreamController<ContactDetails?>();
+  final StreamController<ContactDetails?> _scContactBadgeModel = StreamController<ContactDetails?>.broadcast();
   Stream<ContactDetails?> get stateStream => _scContactBadgeModel.stream;
 
   final StreamGroup<Event> _sgContactBadgeModel = StreamGroup<Event>();
