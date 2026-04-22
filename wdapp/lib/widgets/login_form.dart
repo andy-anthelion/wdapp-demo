@@ -112,7 +112,7 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   String? _validateLocation(String? value) {
-    print("Validate location called ${value}");
+    // print("Validate location called ${value}");
     if (value == null || value.isEmpty) {
       return 'Is required';
     }
