@@ -28,7 +28,10 @@ class ContactBadgeModel {
   final StreamGroup<Event> _sgContactBadgeModel = StreamGroup<Event>();
 
   Future<void> _handleEvents(Event event) async {
+    bool pushState = true;
     switch(event) {
+      case UserEventLogout():
+        contact = null;
       case UserEventSelectContact():
         contact = ContactDetails(
           age: event.age,
@@ -40,9 +43,13 @@ class ContactBadgeModel {
           unread: 0,
           timestamp: 0,
         );
-        _scContactBadgeModel.sink.add(contact);
       default:
+        pushState = false;
         print("ContactBadgeModel : no handler for event");
+    }
+
+    if(pushState && _scContactBadgeModel.hasListener) {
+      _scContactBadgeModel.sink.add(contact);
     }
   }
 }
