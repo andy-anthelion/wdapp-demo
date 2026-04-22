@@ -36,23 +36,7 @@ class ServerEventMessageDelivery extends ServerEvent {
   }): super();
 }
 
-class UserEventSync extends UserEvent {}
-
-class UserEventSelectContact extends UserEvent {
-  final int age;
-  final String gender;
-  final String loc;
-  final String location;
-  final String name;
-
-  UserEventSelectContact({
-    required this.age,
-    required this.gender,
-    required this.loc,
-    required this.location,
-    required this.name,
-  }): super();
-}
+class UserEventLogout extends UserEvent {}
 
 class UserEventReadMessage extends UserEvent {
   final String id1;
@@ -61,6 +45,26 @@ class UserEventReadMessage extends UserEvent {
   UserEventReadMessage({
     required this.id1,
     required this.id2,
+  }): super();
+}
+
+class UserEventSelectContact extends UserEvent {
+  final int age;
+  final String gender;
+  final String id;
+  final String loc;
+  final String location;
+  final String name;
+  final int unread;
+
+  UserEventSelectContact({
+    required this.age,
+    required this.gender,
+    required this.id,
+    required this.loc,
+    required this.location,
+    required this.name,
+    required this.unread,
   }): super();
 }
 
@@ -75,3 +79,5 @@ class UserEventSendMessage extends UserEvent {
     required this.to,
   }): super();
 }
+
+class UserEventSync extends UserEvent {}
