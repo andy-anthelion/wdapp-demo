@@ -10,9 +10,6 @@ class ContactHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    LogoutButtonModel viewModel = LogoutButtonModel(
-      authRepo: context.read()
-    );
     return Padding(
       padding: EdgeInsets.all(16.0),
       child: Row(
@@ -25,7 +22,7 @@ class ContactHeader extends StatelessWidget {
               ),
             ),
           ),
-          LogoutButton(viewModel: viewModel),
+          LogoutButton(viewModel: context.read()),
         ],
       ),
     );

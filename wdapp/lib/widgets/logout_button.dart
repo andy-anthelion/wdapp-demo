@@ -2,17 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:result_dart/result_dart.dart';
 
+import "../models/events/events.dart";
 import '../repos/auth_repo.dart';
+import '../repos/app_repo.dart';
 import '../routing/routes.dart';
 
 class LogoutButtonModel {
   LogoutButtonModel({
     required AuthRepo authRepo,
-  }): _authRepo = authRepo;
+    required AppRepo appRepo,
+  }):
+    _authRepo = authRepo,
+    _appRepo = appRepo
+  {}
 
   final AuthRepo _authRepo;
+  final AppRepo _appRepo;
 
   Future<Result<void>> logout() async => _authRepo.logout();
+
+  void sendLogoutEvent() => _appRepo.appSendUserEvent(UserEventLogout());
 }
 
 class LogoutButton extends StatefulWidget {
@@ -41,9 +50,10 @@ class _LogoutButtonState extends State<LogoutButton> {
     widget.viewModel.logout()
     .then((Result<void> result) {
       result.fold((void _) {
+        widget.viewModel.sendLogoutEvent();
         GoRouter.of(context).go(Routes.home);
       },(failure) {
-        _renderSnackBar("Login Failed! ${failure.toString()}");
+        _renderSnackBar("Logout Failed! ${failure.toString()}");
       });
     })
     .whenComplete(() => setState(() { isActive = false; }));

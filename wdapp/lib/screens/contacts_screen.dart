@@ -8,13 +8,10 @@ class ContactsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    LogoutButtonModel viewModel = LogoutButtonModel(
-      authRepo: context.read(),
-    );
     return Scaffold(
       appBar: AppBar(title: const Text('Contacts')),
       body: Center(
-        child: LogoutButton(viewModel: viewModel),
+        child: LogoutButton(viewModel: context.read()),
       ),
     );
   }
