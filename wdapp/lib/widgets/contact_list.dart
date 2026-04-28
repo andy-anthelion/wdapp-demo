@@ -86,7 +86,7 @@ class ContactListModel {
     ); 
   }; 
 
-  void initalize() {
+  Future<void> initalize() async {
 
     // 0. check if contacts is null
     if(contacts != null) {
@@ -94,12 +94,12 @@ class ContactListModel {
     }
 
     // 1. get id from Auth Repo and store
-    String? id = _authRepo.info != null ? _authRepo.info!['galn'] : null;
+    String? id = (await _authRepo.isAuthenticated) ? _authRepo.info!['galn'] : null;
     if(id == null) {
       return;
     }
 
-    Contact self = Contact(id: id);
+    Contact self = Contact(id: id!);
     // 2. get conversations from Unread Repo, for each convo, get id
     //    put corresponding ContactDetails into "contacts" and update unread count
     _unreadRepo.getAllUnread(self).forEach((Contact c, int count) {
