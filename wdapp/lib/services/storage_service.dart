@@ -31,4 +31,16 @@ class StorageService {
   Future<Result<String>> fetchToken() async => await _fetchString(_tokenKey);
   Future<Result<void>> saveToken(String? value) async => await _saveString(_tokenKey, value);
 
+  static const String _contactsKey = 'CONTACTS';
+  Future<Result<String>> fetchContacts() async => await _fetchString(_contactsKey);
+  Future<Result<void>> saveContacts(String? value) async => await _saveString(_contactsKey, value);
+
+  static const String _unreadKey = 'UNREAD';
+  Future<Result<String>> fetchUnread() async => await _fetchString(_unreadKey);
+  Future<Result<void>> saveUnread(String? value) async => await _saveString(_unreadKey, value);
+
+  static const String _messagesKey = 'MESSAGES';
+  Future<Result<String>> fetchMessages() async => await _fetchString(_messagesKey);
+  Future<Result<void>> saveMessages(String? value) async => await _saveString(_messagesKey, value);
+
 }
