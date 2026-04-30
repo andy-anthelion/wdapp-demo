@@ -16,15 +16,14 @@ import '../widgets/contact_card.dart';
 
 class ContactListModel {
 
-  List<ContactDetails>? contacts; 
-
+  List<ContactDetails>? _contacts; 
   final AppRepo _appRepo;
   final AuthRepo _authRepo;
   final ContactRepo _contactRepo;
   final LocationRepo _locationRepo;
   final UnreadRepo _unreadRepo;
-  final StreamController<List<ContactDetails>?> _scContactListModel = StreamController<List<ContactDetails>?>.broadcast();
-  final StreamGroup<Event> _sgContactListModel = StreamGroup<Event>();
+  late final StreamController<List<ContactDetails>?> _scContactListModel;
+  late final StreamGroup<Event> _sgContactListModel;
 
   ContactListModel({
     required AppRepo appRepo,
@@ -64,6 +63,11 @@ class ContactListModel {
     //   ),
     // ];
 
+    _scContactListModel = StreamController<List<ContactDetails>?>.broadcast(
+      onListen: () => _scContactListModel.sink.add(_contacts),
+    );
+
+    _sgContactListModel = StreamGroup<Event>();
     _sgContactListModel.stream.listen(_handleEvents);
     _sgContactListModel.add(appRepo.appUserEvents);
     _sgContactListModel.add(contactRepo.contactEvents);
@@ -75,51 +79,53 @@ class ContactListModel {
   Function(int) get tapAction => (int index) { 
     _appRepo.appSendUserEvent(
       UserEventSelectContact(
-        age: contacts![index].age,
-        gender: contacts![index].gender,
-        id: contacts![index].id,
-        loc: contacts![index].loc,
-        location: contacts![index].location,
-        name: contacts![index].name,
-        unread: contacts![index].unread,
+        age: _contacts![index].age,
+        gender: _contacts![index].gender,
+        id: _contacts![index].id,
+        loc: _contacts![index].loc,
+        location: _contacts![index].location,
+        name: _contacts![index].name,
+        unread: _contacts![index].unread,
       )
     ); 
   }; 
 
-  Future<void> initalize() async {
+  Future<List<ContactDetails>?> get contacts async {
 
     // 0. check if contacts is null
-    if(contacts != null) {
-      return;
+    if(_contacts != null) {
+      return _contacts;
     }
 
     // 1. get id from Auth Repo and store
     String? id = (await _authRepo.isAuthenticated) ? _authRepo.info!['galn'] : null;
     if(id == null) {
-      return;
+      return _contacts;
     }
 
     Contact self = Contact(id: id!);
     // 2. get conversations from Unread Repo, for each convo, get id
     //    put corresponding ContactDetails into "contacts" and update unread count
-    _unreadRepo.getAllUnread(self).forEach((Contact c, int count) {
-      _insertContactIntoContacts(c, count);
-    });
+    for(final MapEntry(key: c, value: count) in _unreadRepo.getAllUnread(self).entries) {
+      await _insertContactIntoContacts(c, count);
+    }
 
     // 3. get contacts from Contact Repo and store in ContactDetails
-    _contactRepo.contacts().forEach((Contact c) {
-      if(contacts!.any((ContactDetails cd) => cd.id == c.id)) {
-        return;
+    for(final Contact c in (await _contactRepo.contacts)) {
+      if(_contacts!.any((ContactDetails cd) => cd.id == c.id)) {
+        continue;
       }
-      _insertContactIntoContacts(c, 0);
-    });
+      await _insertContactIntoContacts(c, 0);
+    }
+
+    return _contacts;
   }
 
-  void _handleEvents(Event event) {
+  Future<void> _handleEvents(Event event) async {
     bool pushState = true;
     switch(event) {
       case ServerEventContactOnline():
-        _insertContactIntoContacts(Contact(id: event.id), 0);
+        await _insertContactIntoContacts(Contact(id: event.id), 0);
         print("ContactListModel: contact online");
 
       case ServerEventContactOffline():
@@ -128,18 +134,18 @@ class ContactListModel {
 
       case ServerEventMessageDelivery():
         if(event.toInbox) {
-          _updateUnreadInContacts(Contact(id: event.from));
+          await _updateUnreadInContacts(Contact(id: event.from));
           print("ContactListModel: message received with contact");
         }
 
       case UserEventLogout():
-        contacts = null;
+        _contacts = null;
         print("ContactListModel: user logged out ");
 
       case UserEventSelectContact():
         if(event.unread > 0) {
           String userID = _authRepo.info!['galn'];
-          _updateUnreadInContacts(Contact(id: event.id), reset: true);
+          await _updateUnreadInContacts(Contact(id: event.id), reset: true);
           _unreadRepo.unreadSendEvent(UserEventReadMessage(id1: userID, id2: event.id));
         }
 
@@ -148,82 +154,81 @@ class ContactListModel {
         print("ContactListModel : no handler for event");
     }
 
-    if(pushState && _scContactListModel.hasListener) {
-      _scContactListModel.sink.add(contacts);
+    // print("Checkpoint: pushState = ${pushState}, hasListen = ${_scContactListModel.hasListener}, contacts = ${_contacts}");
+    if(pushState) {
+      _scContactListModel.sink.add(_contacts);
     }
   }
 
   void _removeContactFromContacts(Contact contact) {
-    contacts!.removeWhere((ContactDetails c) => c.id == contact.id);
+    _contacts!.removeWhere((ContactDetails c) => c.id == contact.id);
   }
 
-  void _updateUnreadInContacts(Contact contact, {bool reset = false}) {
-    int index = contacts!.indexWhere((ContactDetails c) => c.id == contact.id);
+  Future<void> _updateUnreadInContacts(Contact contact, {bool reset = false}) async {
+    int index = _contacts!.indexWhere((ContactDetails c) => c.id == contact.id);
     if(index == -1) {
-      _insertContactIntoContacts(contact, reset ? 0: 1);
+      await _insertContactIntoContacts(contact, reset ? 0: 1);
     } else {
-      final int unread = contacts![index].unread + 1; 
-      final ContactDetails cd = contacts![index].copyWith(unread: reset ? 0 : unread);
+      final int unread = _contacts![index].unread + 1; 
+      final ContactDetails cd = _contacts![index].copyWith(unread: reset ? 0 : unread);
       _removeContactFromContacts(contact);
       _insertIntoContacts(cd);
-      // print(contacts);
     }
   }
 
-  void _insertContactIntoContacts(Contact newContact, int unreadCount) {
-    _locationRepo.getLocationName(newContact.loc).then((RD.Result<String> result) {
-      _insertIntoContacts(ContactDetails(
-        gender: newContact.gender,
-        age: newContact.age,
-        loc: newContact.loc,
-        name: newContact.name,
-        location: result.getOrDefault(""),
-        unread: unreadCount,
-        timestamp: 0,
-        message: ""
-      ));
-    });
+  Future<void> _insertContactIntoContacts(Contact newContact, int unreadCount) async {
+    RD.Result<String> result = await _locationRepo.getLocationName(newContact.loc);
+    _insertIntoContacts(ContactDetails(
+      gender: newContact.gender,
+      age: newContact.age,
+      loc: newContact.loc,
+      name: newContact.name,
+      location: result.getOrDefault(""),
+      unread: unreadCount,
+      timestamp: 0,
+      message: ""
+    ));
   }
 
   void _insertIntoContacts(ContactDetails newContact) {
-    contacts ??= [];
+    _contacts ??= [];
     // assume list is sorted
-    if(contacts!.isEmpty) {
-      contacts!.add(newContact);
+    if(_contacts!.isEmpty) {
+      _contacts!.add(newContact);
     } else {
       //find the best position to insert in sorted list
       int insertAt = 0;
 
       //insert by name, loc and unread
-      insertAt = contacts!.indexWhere((ContactDetails c) {
+      insertAt = _contacts!.indexWhere((ContactDetails c) {
         return c.name.compareTo(newContact.name) > 0 && 
               c.loc.compareTo(newContact.loc) == 0 && 
               c.unread == newContact.unread;
       });
       if(insertAt != -1) {
-        contacts!.insert(insertAt, newContact);
+        _contacts!.insert(insertAt, newContact);
         return;  
       }
 
       //insert by loc and unread
-      insertAt = contacts!.indexWhere((ContactDetails c) {
+      insertAt = _contacts!.indexWhere((ContactDetails c) {
         return c.loc.compareTo(newContact.loc) > 0 && 
               c.unread == newContact.unread;
       });
       if(insertAt != -1) {
-        contacts!.insert(insertAt, newContact);
+        _contacts!.insert(insertAt, newContact);
         return;  
       }
 
       // insert by unread
-      insertAt = contacts!.indexWhere((ContactDetails c) => c.unread < newContact.unread); 
+      insertAt = _contacts!.indexWhere((ContactDetails c) => c.unread < newContact.unread); 
       if(insertAt != -1 ) {
-        contacts!.insert(insertAt, newContact);
+        _contacts!.insert(insertAt, newContact);
         return;
       }
   
       // insert at end
-      contacts!.insert(contacts!.length, newContact);
+      _contacts!.insert(_contacts!.length, newContact);
     }
   }
 }
@@ -276,11 +281,18 @@ class ContactList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        bool isCompact = constraints.maxHeight < 500;
-        return StreamBuilder(
+      builder: (
+        BuildContext context, 
+        BoxConstraints constraints
+      ) => FutureBuilder<List<ContactDetails>?> (
+        future: viewModel.contacts,
+        initialData: null,
+        builder: (
+          BuildContext context,
+          AsyncSnapshot<List<ContactDetails>?> futureSnapshot,
+        ) => StreamBuilder (
           stream: viewModel.stateStream,
-          initialData: viewModel.contacts,
+          initialData: futureSnapshot.data,
           builder: (
             BuildContext context, 
             AsyncSnapshot<List<ContactDetails>?> snapshot
@@ -288,12 +300,12 @@ class ContactList extends StatelessWidget {
             if(snapshot.data == null || snapshot.data?.length == 0) {
               return Center(child: Text("No Contacts!"));
             }
-            return isCompact ? 
+            return (constraints.maxHeight < 500) ? 
               _buildCompact(context, snapshot.data):
               _buildRegular(context, snapshot.data);
-          }
-        );  
-      },
+          },
+        ),
+      ),  
     );
   }
 }
