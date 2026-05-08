@@ -7,6 +7,7 @@ import 'routes.dart';
 import '../models/events/events.dart';
 import '../repos/app_repo.dart';
 import '../repos/auth_repo.dart';
+import '../repos/contact_repo.dart';
 
 import '../screens/chat_screen.dart';
 import '../screens/contacts_screen.dart';
@@ -19,6 +20,7 @@ class WDRouter {
     final bool loggingIn = state.matchedLocation == Routes.login;
 
     if(!loggedIn) {
+      await context.read<ContactRepo>().contactSendEvent(UserEventLogout());
       return Routes.login;
     }
 

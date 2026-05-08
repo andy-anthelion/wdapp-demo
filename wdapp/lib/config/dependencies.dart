@@ -34,13 +34,18 @@ List<SingleChildWidget> get providersBetaConfig {
         handleDone: context.read<EventService>().handleDone,
       )
     ), lazy: false),
-    Provider(create: (context) => AppRepo(), lazy: false),
+    Provider(create: (context) => AppRepo(
+      apiService: context.read<ApiService>(),
+      randomService: context.read<RandomService>(),
+      storageService: context.read<StorageService>(),
+    ), lazy: false),
     ChangeNotifierProvider(create: (context) => AuthRepo(
       apiService: context.read<ApiService>(),
       storageService: context.read<StorageService>(),
     ), lazy: false),
     Provider(create: (context) => ContactRepo(
       apiService: context.read<ApiService>(),
+      storageService: context.read<StorageService>(),
     ), lazy: false),
     Provider(create: (context) => LocationRepo(
       locationService: context.read<LocationService>(),
