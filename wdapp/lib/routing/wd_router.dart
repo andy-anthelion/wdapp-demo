@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'routes.dart';
 
+import '../models/events/events.dart';
+import '../repos/app_repo.dart';
 import '../repos/auth_repo.dart';
 
 import '../screens/chat_screen.dart';
@@ -32,6 +34,7 @@ class WDRouter {
       GoRoute(
         path: Routes.login,
         builder: (context, state) {
+          context.read<AppRepo>().stopAppSync();
           return LoginScreen();
         }
       ),
@@ -45,6 +48,7 @@ class WDRouter {
       GoRoute(
         path: Routes.chat,
         builder: (context, state) {
+          context.read<AppRepo>().startAppSync();
           return ChatScreen();
         }
       ),

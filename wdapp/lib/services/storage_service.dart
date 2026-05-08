@@ -43,4 +43,9 @@ class StorageService {
   Future<Result<String>> fetchMessages() async => await _fetchString(_messagesKey);
   Future<Result<void>> saveMessages(String? value) async => await _saveString(_messagesKey, value);
 
+  static const String _syncKey = 'SYNCNONCE';
+  Future<Result<String>> fetchSyncNonce() async => await _fetchString(_syncKey);
+  Future<Result<void>> saveSyncNonce(String? value) async => await _saveString(_syncKey, value);
+
+
 }
