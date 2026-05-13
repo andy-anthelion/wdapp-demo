@@ -77,6 +77,7 @@ class ContactRepo {
     );
     return await _storageService.saveContacts(jsonEncode(jsonData));
   }
+  
   Future<RD.Result<void>> _clear() async => await _storageService.saveContacts(null);
 
   Future<void> _handleContactEvents(Event event) async {
@@ -91,8 +92,6 @@ class ContactRepo {
         (_cachedContacts ??= {})[Contact(id: event.id)] = false;
         await _store();
         // print("Contacts length : ${_cachedContacts.length}");
-      case UserEventSync():
-        await _apiService.synchronize();
       case UserEventLogout():
         _cachedContacts = null;
         await _clear();
