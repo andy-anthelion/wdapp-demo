@@ -198,6 +198,12 @@ class ContactListModel {
     if(_contacts!.isEmpty) {
       _contacts!.add(newContact);
     } else {
+
+      //check if contact already present
+      if (_contacts!.indexWhere((ContactDetails cd) => cd.id == newContact.id) != -1) {
+        return;
+      }
+
       //find the best position to insert in sorted list
       int insertAt = 0;
 
