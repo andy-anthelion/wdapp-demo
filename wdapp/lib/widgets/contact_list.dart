@@ -16,7 +16,10 @@ import '../widgets/contact_card.dart';
 
 class ContactListModel {
 
+  static const Contact NONE = Contact(id:"");
+
   List<ContactDetails>? _contacts; 
+  Contact? _self;
   final AppRepo _appRepo;
   final AuthRepo _authRepo;
   final ContactRepo _contactRepo;
@@ -38,31 +41,6 @@ class ContactListModel {
     _locationRepo = locationRepo,
     _unreadRepo = unreadRepo
   {
-    // const mj1 = Contact(id:'+23USCA.ZaryJane....');
-    // const mj2 = Contact(id:'+25USCA.MaryJane....');
-    // contacts = <ContactDetails> [
-    //   ContactDetails(
-    //     name: mj1.name,
-    //     age: mj1.age,
-    //     loc: mj1.loc,
-    //     gender: mj1.gender,
-    //     unread: 3,
-    //     timestamp: 0,
-    //     location: 'California (United States of America)',
-    //     message: 'How is everything Mary?',
-    //   ),
-    //   ContactDetails(
-    //     name: mj2.name,
-    //     age: mj2.age,
-    //     loc: mj2.loc,
-    //     gender: mj2.gender,
-    //     unread: 0,
-    //     timestamp: 0,
-    //     location: 'New Jersy (United States of America)',
-    //     message: 'Mary me!!',
-    //   ),
-    // ];
-
     _scContactListModel = StreamController<List<ContactDetails>?>.broadcast(
       onListen: () => _scContactListModel.sink.add(_contacts),
     );
@@ -77,55 +55,78 @@ class ContactListModel {
   Stream<List<ContactDetails>?> get stateStream => _scContactListModel.stream;
   
   Function(int) get tapAction => (int index) { 
+    ContactDetails cd = _contacts![index];
     _appRepo.appSendUserEvent(
       UserEventSelectContact(
-        age: _contacts![index].age,
-        gender: _contacts![index].gender,
-        id: _contacts![index].id,
-        loc: _contacts![index].loc,
-        location: _contacts![index].location,
-        name: _contacts![index].name,
-        unread: _contacts![index].unread,
+        age: cd.age,
+        gender: cd.gender,
+        id: cd.id,
+        loc: cd.loc,
+        location: cd.location,
+        name: cd.name,
+        unread: cd.unread,
       )
     ); 
   }; 
 
-  Future<List<ContactDetails>?> get contacts async {
+  Future<Contact> get self async {
+    if(_self != null) {
+      return _self!;
+    }
+
+    if(await _authRepo.isAuthenticated) {
+      return Contact(id: _authRepo.info!['galn']);
+    }
+
+    return ContactListModel.NONE;
+  }
+
+  Future<List<ContactDetails>> get contacts async {
 
     // 0. check if contacts is null
+    // print("ContactList: ${_contacts}");
     if(_contacts != null) {
-      return _contacts;
+      return _contacts!;
     }
 
-    // 1. get id from Auth Repo and store
-    String? id = (await _authRepo.isAuthenticated) ? _authRepo.info!['galn'] : null;
-    if(id == null) {
-      return _contacts;
+    _contacts = <ContactDetails>[];
+
+    Contact contactSelf = await self;
+    if(contactSelf == ContactListModel.NONE) {
+      return _contacts!;
     }
 
-    Contact self = Contact(id: id!);
     // 2. get conversations from Unread Repo, for each convo, get id
     //    put corresponding ContactDetails into "contacts" and update unread count
-    for(final MapEntry(key: c, value: count) in _unreadRepo.getAllUnread(self).entries) {
+    for(final MapEntry(key: c, value: count) in _unreadRepo.getAllUnread(contactSelf).entries) {
       await _insertContactIntoContacts(c, count);
     }
 
     // 3. get contacts from Contact Repo and store in ContactDetails
-    for(final Contact c in (await _contactRepo.contacts)) {
+    List<Contact> repoContacts = await _contactRepo.contacts;
+    for(final Contact c in repoContacts) {
+      // print("ContactList: From Repo = ${c.id}");
       if(_contacts!.any((ContactDetails cd) => cd.id == c.id)) {
         continue;
       }
+      if(c == contactSelf) {
+        continue;
+      }
+      // print("ContactList: Insert into list = ${c.id}");
       await _insertContactIntoContacts(c, 0);
     }
 
-    return _contacts;
+    // print("ContactList: _contacts = ${_contacts}");
+    return _contacts!;
   }
 
   Future<void> _handleEvents(Event event) async {
     bool pushState = true;
     switch(event) {
       case ServerEventContactOnline():
-        await _insertContactIntoContacts(Contact(id: event.id), 0);
+        if((await self).id != event.id) {
+          await _insertContactIntoContacts(Contact(id: event.id), 0);
+        }
         print("ContactListModel: contact online");
 
       case ServerEventContactOffline():
@@ -160,25 +161,26 @@ class ContactListModel {
     }
   }
 
-  void _removeContactFromContacts(Contact contact) {
+  Future<void> _removeContactFromContacts(Contact contact) async {
+    await contacts;
     _contacts!.removeWhere((ContactDetails c) => c.id == contact.id);
   }
 
   Future<void> _updateUnreadInContacts(Contact contact, {bool reset = false}) async {
-    int index = _contacts!.indexWhere((ContactDetails c) => c.id == contact.id);
+    int index = (await contacts).indexWhere((ContactDetails c) => c.id == contact.id);
     if(index == -1) {
       await _insertContactIntoContacts(contact, reset ? 0: 1);
     } else {
       final int unread = _contacts![index].unread + 1; 
       final ContactDetails cd = _contacts![index].copyWith(unread: reset ? 0 : unread);
-      _removeContactFromContacts(contact);
-      _insertIntoContacts(cd);
+      await _removeContactFromContacts(contact);
+      await _insertIntoContacts(cd);
     }
   }
 
   Future<void> _insertContactIntoContacts(Contact newContact, int unreadCount) async {
     RD.Result<String> result = await _locationRepo.getLocationName(newContact.loc);
-    _insertIntoContacts(ContactDetails(
+    await _insertIntoContacts(ContactDetails(
       gender: newContact.gender,
       age: newContact.age,
       loc: newContact.loc,
@@ -190,8 +192,8 @@ class ContactListModel {
     ));
   }
 
-  void _insertIntoContacts(ContactDetails newContact) {
-    _contacts ??= [];
+  Future<void> _insertIntoContacts(ContactDetails newContact) async {
+    await contacts;
     // assume list is sorted
     if(_contacts!.isEmpty) {
       _contacts!.add(newContact);
@@ -290,21 +292,28 @@ class ContactList extends StatelessWidget {
         builder: (
           BuildContext context,
           AsyncSnapshot<List<ContactDetails>?> futureSnapshot,
-        ) => StreamBuilder (
-          stream: viewModel.stateStream,
-          initialData: futureSnapshot.data,
-          builder: (
-            BuildContext context, 
-            AsyncSnapshot<List<ContactDetails>?> snapshot
-          ){
-            if(snapshot.data == null || snapshot.data?.length == 0) {
-              return Center(child: Text("No Contacts!"));
-            }
-            return (constraints.maxHeight < 500) ? 
-              _buildCompact(context, snapshot.data):
-              _buildRegular(context, snapshot.data);
-          },
-        ),
+        ){
+          if(futureSnapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: Text("Loading ..."));
+          }
+          return StreamBuilder<List<ContactDetails>?> (
+            stream: viewModel.stateStream,
+            initialData: futureSnapshot.data,
+            builder: (
+              BuildContext context, 
+              AsyncSnapshot<List<ContactDetails>?> snapshot
+            ){
+              // print("Checkpoint: hasData=${snapshot.hasData} hasError=${snapshot.hasError} state=${snapshot.connectionState.toString()}");
+              // print(snapshot.data);
+              if(snapshot.data == null || snapshot.data?.length == 0) {
+                return Center(child: Text("No Contacts!"));
+              }
+              return (constraints.maxHeight < 500) ? 
+                _buildCompact(context, snapshot.data):
+                _buildRegular(context, snapshot.data);
+            },
+          );
+        },
       ),  
     );
   }
