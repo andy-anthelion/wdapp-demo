@@ -45,5 +45,16 @@ class Conversation {
   @override
   int get hashCode => 
     Object.hash(alpha.hashCode, beta.hashCode);
-  
+
+  String toJson() {
+    return '$alpha|$beta';
+  }
+
+  static Conversation fromJson(String json) {
+    final parts = json.split('|');
+    return Conversation(
+      id1: parts[0],
+      id2: parts[1],
+    );
+  }
 }

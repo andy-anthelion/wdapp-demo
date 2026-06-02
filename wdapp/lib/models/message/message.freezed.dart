@@ -26,6 +26,9 @@ mixin _$Message {
   $MessageCopyWith<Message> get copyWith =>
       _$MessageCopyWithImpl<Message>(this as Message, _$identity);
 
+  /// Serializes this Message to a JSON map.
+  Map<String, dynamic> toJson();
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -39,6 +42,7 @@ mixin _$Message {
                 other.timestamp == timestamp));
   }
 
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
       Object.hash(runtimeType, from, message, nonce, to, timestamp);
@@ -305,7 +309,7 @@ extension MessagePatterns on Message {
 }
 
 /// @nodoc
-
+@JsonSerializable()
 class _Message extends Message {
   const _Message({
     required this.from,
@@ -314,6 +318,8 @@ class _Message extends Message {
     required this.to,
     required this.timestamp,
   }) : super._();
+  factory _Message.fromJson(Map<String, dynamic> json) =>
+      _$MessageFromJson(json);
 
   @override
   final String from;
@@ -335,6 +341,11 @@ class _Message extends Message {
       __$MessageCopyWithImpl<_Message>(this, _$identity);
 
   @override
+  Map<String, dynamic> toJson() {
+    return _$MessageToJson(this);
+  }
+
+  @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
@@ -347,6 +358,7 @@ class _Message extends Message {
                 other.timestamp == timestamp));
   }
 
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
       Object.hash(runtimeType, from, message, nonce, to, timestamp);
