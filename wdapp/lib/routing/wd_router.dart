@@ -20,7 +20,6 @@ class WDRouter {
     final bool loggingIn = state.matchedLocation == Routes.login;
 
     if(!loggedIn) {
-      await context.read<ContactRepo>().contactSendEvent(UserEventLogout());
       return Routes.login;
     }
 
@@ -37,6 +36,8 @@ class WDRouter {
         path: Routes.login,
         builder: (context, state) {
           context.read<AppRepo>().stopAppSync();
+          context.read<ContactRepo>().contactSendEvent(UserEventLogout());
+          context.read<MessageRepo>().messageSendEvent(UserEventLogout());
           return LoginScreen();
         }
       ),
