@@ -53,6 +53,7 @@ List<SingleChildWidget> get providersBetaConfig {
     Provider(create: (context) => MessageRepo(
       apiService: context.read<ApiService>(),
       randomService: context.read<RandomService>(),
+      storageService: context.read<StorageService>(),
     ), lazy: false),
     Provider(create: (context) => UnreadRepo(
       apiService: context.read<ApiService>(),
