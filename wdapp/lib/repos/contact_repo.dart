@@ -72,6 +72,9 @@ class ContactRepo {
   }
 
   Future<RD.Result<void>> _store() async {
+    if(_cachedContacts == null || _cachedContacts == {}) {
+      return RD.Success(());
+    }
     final Map<String,bool> jsonData = _cachedContacts!.map(
       (key, value) => MapEntry<String, bool>(key.id, value)
     );
